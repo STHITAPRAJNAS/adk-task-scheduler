@@ -51,6 +51,9 @@ packages = ["adk_task_scheduler"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+markers = [
+    "live: requires GOOGLE_API_KEY, makes real Gemini API calls",
+]
 
 [tool.ruff]
 line-length = 100
