@@ -6,7 +6,6 @@ import logging
 
 from google.adk.runners import Runner
 from google.adk.sessions.base_session_service import BaseSessionService
-from google.adk.sessions.in_memory_session_service import InMemorySessionService
 from google.genai import types
 
 from .config import ScheduleConfig
@@ -23,28 +22,45 @@ class RunnerPool:
 
     The pool is intentionally separate from ADK's internal ``runner_dict`` so
     that ad-hoc triggers served by the FastAPI app are completely unaffected.
+
+    Args:
+        base_dir: Base directory passed to ADK's service factory helpers
+            (used for local-file fallback storage).  Defaults to ``"."``.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, base_dir: str = ".") -> None:
+        self._base_dir = base_dir
         self._entries: dict[str, tuple[Runner, BaseSessionService]] = {}
 
     def get_or_create(self, cfg: ScheduleConfig) -> tuple[Runner, BaseSessionService]:
         key = cfg.app_name
         if key not in self._entries:
-            if cfg.session_service_uri:
-                from google.adk.sessions.database_session_service import (
-                    DatabaseSessionService,
-                )
-                svc: BaseSessionService = DatabaseSessionService(
-                    db_url=cfg.session_service_uri
-                )
-            else:
-                svc = InMemorySessionService()
+            from google.adk.cli.fast_api import (
+                create_artifact_service_from_options,
+                create_memory_service_from_options,
+                create_session_service_from_options,
+            )
+
+            svc = create_session_service_from_options(
+                base_dir=self._base_dir,
+                session_service_uri=cfg.session_service_uri,
+                session_db_kwargs=cfg.session_db_kwargs,
+            )
+            artifact_service = create_artifact_service_from_options(
+                base_dir=self._base_dir,
+                artifact_service_uri=cfg.artifact_service_uri,
+            )
+            memory_service = create_memory_service_from_options(
+                base_dir=self._base_dir,
+                memory_service_uri=cfg.memory_service_uri,
+            )
 
             runner = Runner(
                 app_name=cfg.app_name,
                 agent=cfg.agent,
                 session_service=svc,
+                artifact_service=artifact_service,
+                memory_service=memory_service,
             )
             self._entries[key] = (runner, svc)
 

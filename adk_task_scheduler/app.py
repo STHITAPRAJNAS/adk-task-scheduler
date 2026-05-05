@@ -69,7 +69,16 @@ def build_scheduled_app(
         )
         all_schedules.extend(discovered)
 
-    lifespan = build_scheduler_lifespan(all_schedules) if all_schedules else None
+    # Propagate service URIs from fastapi_kwargs into any schedule that hasn't
+    # set them explicitly — users configure once in build_scheduled_app, not
+    # on every individual ScheduleConfig.
+    _propagate_service_uris(all_schedules, fastapi_kwargs)
+
+    lifespan = (
+        build_scheduler_lifespan(all_schedules, base_dir=agents_dir)
+        if all_schedules
+        else None
+    )
 
     if not all_schedules:
         logger.warning(
@@ -126,3 +135,30 @@ def _discover_schedules(agents_dir: str) -> list[ScheduleConfig]:
             configs.append(cfg)
 
     return configs
+
+
+_SERVICE_URI_FIELDS = (
+    "session_service_uri",
+    "session_db_kwargs",
+    "artifact_service_uri",
+    "memory_service_uri",
+)
+
+
+def _propagate_service_uris(
+    schedules: list[ScheduleConfig],
+    fastapi_kwargs: dict[str, Any],
+) -> None:
+    """Copy service URI kwargs into any ScheduleConfig that hasn't set them.
+
+    Allows callers to configure once at ``build_scheduled_app`` level rather
+    than repeating the same URIs on every individual ``ScheduleConfig``.
+    Only fields that are ``None`` on the config are overwritten.
+    """
+    overrides = {k: fastapi_kwargs[k] for k in _SERVICE_URI_FIELDS if k in fastapi_kwargs}
+    if not overrides:
+        return
+    for cfg in schedules:
+        for field_name, value in overrides.items():
+            if getattr(cfg, field_name) is None:
+                object.__setattr__(cfg, field_name, value)

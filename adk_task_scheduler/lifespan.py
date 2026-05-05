@@ -15,7 +15,7 @@ from .invoker import RunnerPool, evaluate_condition, invoke_agent, make_apschedu
 logger = logging.getLogger(__name__)
 
 
-def build_scheduler_lifespan(schedules: list[ScheduleConfig]):
+def build_scheduler_lifespan(schedules: list[ScheduleConfig], base_dir: str = "."):
     """Build a FastAPI-compatible lifespan context manager that starts and stops
     an APScheduler ``AsyncIOScheduler`` housing all provided schedules.
 
@@ -26,11 +26,14 @@ def build_scheduler_lifespan(schedules: list[ScheduleConfig]):
 
     Args:
         schedules: List of :class:`~adk_task_scheduler.ScheduleConfig` instances.
+        base_dir: Base directory for ADK's service factory helpers (local-file
+            fallback storage).  ``build_scheduled_app`` sets this to
+            ``agents_dir`` automatically.
 
     Returns:
         An async context manager callable suitable for ``Lifespan[FastAPI]``.
     """
-    pool = RunnerPool()
+    pool = RunnerPool(base_dir=base_dir)
     scheduler = AsyncIOScheduler()
 
     for cfg in schedules:

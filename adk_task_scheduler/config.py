@@ -28,10 +28,20 @@ class ScheduleConfig:
             The agent's instruction should distinguish this from real user input
             (e.g. ``"When the message is '__tick__' run the scheduled routine"``).
         user_id: User identity used for the scheduled session.
-        session_service_uri: SQLAlchemy URI for a persistent session store,
-            e.g. ``"sqlite:///./scheduler.db"`` or
-            ``"postgresql://user:pw@host/db"``.
-            Defaults to an in-memory store (state lost on restart).
+        session_service_uri: URI for the session backend, forwarded to ADK's
+            ``create_session_service_from_options``.  Supports SQLAlchemy URIs
+            (``sqlite:///./scheduler.db``, ``postgresql://…``), ``agentengine://``
+            for Vertex AI, or ``memory://`` for in-memory.  When unset the
+            scheduler uses the same default logic as ``get_fast_api_app``.
+        session_db_kwargs: Extra keyword arguments passed to the session service
+            constructor (e.g. pool settings for PostgreSQL).
+        artifact_service_uri: URI for the artifact backend, forwarded to ADK's
+            ``create_artifact_service_from_options``.  Supports ``gs://`` for
+            GCS.  When unset defaults to local-file or in-memory storage.
+        memory_service_uri: URI for the memory backend, forwarded to ADK's
+            ``create_memory_service_from_options``.  Supports ``rag://`` for
+            Vertex AI RAG or ``agentengine://`` for Memory Bank.  When unset
+            defaults to in-memory.
         on_response: Optional callback invoked with the agent's final text after
             each scheduled invocation.
         on_error: Optional callback invoked with any exception raised during a
@@ -54,6 +64,9 @@ class ScheduleConfig:
     trigger_text: str = "__tick__"
     user_id: str = "adk-scheduler"
     session_service_uri: str | None = None
+    session_db_kwargs: dict[str, Any] | None = None
+    artifact_service_uri: str | None = None
+    memory_service_uri: str | None = None
     on_response: Callable[[str], Any] | None = None
     on_error: Callable[[Exception], Any] | None = None
     max_concurrent_runs: int = 1

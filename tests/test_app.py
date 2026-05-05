@@ -157,3 +157,46 @@ def test_list_apps_route_exists(tmp_path):
     # Verify /list-apps exists in the router table
     routes = [r.path for r in app.routes]
     assert "/list-apps" in routes
+
+
+# ---------------------------------------------------------------------------
+# Service URI propagation
+# ---------------------------------------------------------------------------
+
+def test_propagate_service_uris_fills_none_fields(tmp_path):
+    """build_scheduled_app propagates service URIs into configs that lack them."""
+    from adk_task_scheduler.app import _propagate_service_uris
+
+    agent = make_agent("prop_test")
+    cfg = ScheduleConfig(agent=agent, interval_seconds=10)
+    assert cfg.session_service_uri is None
+    assert cfg.artifact_service_uri is None
+
+    kwargs = {
+        "session_service_uri": "sqlite:///./sched.db",
+        "artifact_service_uri": "gs://bucket/artifacts",
+        "memory_service_uri": "memory://",
+        "session_db_kwargs": {"pool_size": 2},
+    }
+    _propagate_service_uris([cfg], kwargs)
+
+    assert cfg.session_service_uri == "sqlite:///./sched.db"
+    assert cfg.artifact_service_uri == "gs://bucket/artifacts"
+    assert cfg.memory_service_uri == "memory://"
+    assert cfg.session_db_kwargs == {"pool_size": 2}
+
+
+def test_propagate_service_uris_does_not_overwrite_explicit(tmp_path):
+    """Configs with explicit URIs are not overwritten."""
+    from adk_task_scheduler.app import _propagate_service_uris
+
+    agent = make_agent("explicit_uri")
+    cfg = ScheduleConfig(
+        agent=agent,
+        interval_seconds=10,
+        session_service_uri="sqlite:///./custom.db",
+    )
+
+    _propagate_service_uris([cfg], {"session_service_uri": "sqlite:///./global.db"})
+
+    assert cfg.session_service_uri == "sqlite:///./custom.db"

@@ -41,3 +41,7 @@ MANIFEST
 # Environment files
 .env
 .env.*
+
+# Local ADK session storage created by tests/scheduler
+*.db
+.adk/

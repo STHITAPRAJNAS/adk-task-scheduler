@@ -72,3 +72,28 @@ def test_condition_poll_interval_default():
     agent = make_agent("poll_default")
     cfg = ScheduleConfig(agent=agent, condition=lambda: False)
     assert cfg.condition_poll_interval == 60
+
+
+def test_service_uri_fields_default_none():
+    agent = make_agent("svc_defaults")
+    cfg = ScheduleConfig(agent=agent, interval_seconds=10)
+    assert cfg.session_service_uri is None
+    assert cfg.session_db_kwargs is None
+    assert cfg.artifact_service_uri is None
+    assert cfg.memory_service_uri is None
+
+
+def test_service_uri_fields_accepted():
+    agent = make_agent("svc_set")
+    cfg = ScheduleConfig(
+        agent=agent,
+        interval_seconds=10,
+        session_service_uri="sqlite:///./test.db",
+        artifact_service_uri="gs://my-bucket/artifacts",
+        memory_service_uri="rag://my-corpus",
+        session_db_kwargs={"pool_size": 5},
+    )
+    assert cfg.session_service_uri == "sqlite:///./test.db"
+    assert cfg.artifact_service_uri == "gs://my-bucket/artifacts"
+    assert cfg.memory_service_uri == "rag://my-corpus"
+    assert cfg.session_db_kwargs == {"pool_size": 5}
