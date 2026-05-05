@@ -56,17 +56,53 @@ async def test_lifespan_empty_schedules_no_error():
 
 @pytest.mark.asyncio
 async def test_lifespan_registers_cron_job():
+    """Verify the APScheduler job is actually registered with the correct id."""
+    from apscheduler.schedulers.asyncio import AsyncIOScheduler
+
+    from adk_task_scheduler.invoker import RunnerPool
+    from adk_task_scheduler.lifespan import _register_job
+
     agent = make_agent("cron_reg")
     cfg = ScheduleConfig(agent=agent, cron="0 * * * *")
 
+    scheduler = AsyncIOScheduler()
+    pool = RunnerPool()
+    _register_job(scheduler, cfg, pool)
+
+    job_ids = [job.id for job in scheduler.get_jobs()]
+    assert cfg.app_name in job_ids
+
+
+@pytest.mark.asyncio
+async def test_condition_poll_interval_is_respected():
+    """condition_poll_interval controls how often the condition is polled."""
+    responses: list[str] = []
+    call_count = 0
+
+    def always_true():
+        nonlocal call_count
+        call_count += 1
+        return True
+
+    agent = make_agent("cond_interval")
+    cfg = ScheduleConfig(
+        agent=agent,
+        condition=always_true,
+        condition_poll_interval=1,  # poll every 1 second
+        trigger_text="__cond__",
+        on_response=responses.append,
+    )
     lifespan = build_scheduler_lifespan([cfg])
 
     class FakeApp:
         pass
 
     async with lifespan(FakeApp()):
-        # APScheduler is running; we trust the scheduler started without error
-        pass
+        await asyncio.sleep(2.5)
+
+    # condition was evaluated at least twice (once per second over 2.5 s)
+    assert call_count >= 2
+    assert len(responses) >= 2
 
 
 @pytest.mark.asyncio
