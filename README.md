@@ -1,9 +1,9 @@
 # adk-task-scheduler
 
-[![PyPI version](https://img.shields.io/pypi/v/adk-task-scheduler.svg)](https://pypi.org/project/adk-task-scheduler/)
-[![Python](https://img.shields.io/pypi/pyversions/adk-task-scheduler.svg)](https://pypi.org/project/adk-task-scheduler/)
+[![PyPI](https://img.shields.io/pypi/v/adk-task-scheduler)](https://pypi.org/project/adk-task-scheduler/)
+[![Python](https://img.shields.io/pypi/pyversions/adk-task-scheduler)](https://pypi.org/project/adk-task-scheduler/)
 [![CI](https://github.com/STHITAPRAJNAS/adk-task-scheduler/actions/workflows/ci.yml/badge.svg)](https://github.com/STHITAPRAJNAS/adk-task-scheduler/actions/workflows/ci.yml)
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 Auto-scheduling for [Google ADK](https://google.github.io/adk-docs/) agents.  
 Bake **cron**, **interval**, or **condition-based** triggers directly into your agent definitions so they self-wake — no separate orchestrator, no cloud scheduler, no code changes to ADK.
