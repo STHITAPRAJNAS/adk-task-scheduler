@@ -35,6 +35,9 @@ class RunnerPool:
     def get_or_create(self, cfg: ScheduleConfig) -> tuple[Runner, BaseSessionService]:
         key = cfg.app_name
         if key not in self._entries:
+            from google.adk.auth.credential_service.in_memory_credential_service import (
+                InMemoryCredentialService,
+            )
             from google.adk.cli.fast_api import (
                 create_artifact_service_from_options,
                 create_memory_service_from_options,
@@ -61,6 +64,7 @@ class RunnerPool:
                 session_service=svc,
                 artifact_service=artifact_service,
                 memory_service=memory_service,
+                credential_service=InMemoryCredentialService(),
             )
             self._entries[key] = (runner, svc)
 

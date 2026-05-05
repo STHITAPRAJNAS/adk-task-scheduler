@@ -36,6 +36,16 @@ class EchoAgent(BaseAgent):
         )
 
 
+@pytest.fixture(autouse=True)
+def _isolated_cwd(tmp_path, monkeypatch):
+    """Run every test with cwd set to a temp dir.
+
+    Prevents ADK's local-SQLite fallback from creating session-storage
+    directories (e.g. agent_a/, responder/) inside the project root.
+    """
+    monkeypatch.chdir(tmp_path)
+
+
 @pytest.fixture
 def echo_agent() -> EchoAgent:
     return EchoAgent(name="echo_agent", description="test echo agent")

@@ -28,6 +28,17 @@ def test_runner_pool_creates_runner_lazily():
     assert len(pool._entries) == 1
 
 
+def test_runner_pool_wires_all_services():
+    """Runner should have non-None artifact, memory, and credential services."""
+    agent = make_agent("svc_check")
+    cfg = ScheduleConfig(agent=agent, interval_seconds=10)
+    pool = RunnerPool()
+    runner, _ = pool.get_or_create(cfg)
+    assert runner.artifact_service is not None
+    assert runner.memory_service is not None
+    assert runner.credential_service is not None
+
+
 def test_runner_pool_reuses_runner():
     agent = make_agent("reuse")
     cfg = ScheduleConfig(agent=agent, interval_seconds=10)
