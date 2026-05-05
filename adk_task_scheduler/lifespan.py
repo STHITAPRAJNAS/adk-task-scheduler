@@ -79,12 +79,16 @@ def _register_job(
         )
 
     elif cfg.condition:
-        # Condition-based: poll every 60 s and fire when condition is truthy.
+        # Condition-based: poll on cfg.condition_poll_interval and fire when truthy.
         # Async function passed directly — AsyncIOScheduler runs it via AsyncIOExecutor.
         async def _condition_job(c: ScheduleConfig = cfg) -> None:
             if await evaluate_condition(c):
                 await invoke_agent(c, pool)
 
-        trigger = IntervalTrigger(seconds=60)
+        trigger = IntervalTrigger(seconds=cfg.condition_poll_interval)
         scheduler.add_job(_condition_job, trigger, **common)
-        logger.debug("Registered condition-polling job '%s' every 60s", job_id)
+        logger.debug(
+            "Registered condition-polling job '%s' every %ds",
+            job_id,
+            cfg.condition_poll_interval,
+        )

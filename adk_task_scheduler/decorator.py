@@ -16,6 +16,7 @@ def scheduled(
     cron: str | None = None,
     interval_seconds: int | None = None,
     condition: Callable[[], Any] | None = None,
+    condition_poll_interval: int = 60,
     trigger_text: str = "__tick__",
     user_id: str = "adk-scheduler",
     session_service_uri: str | None = None,
@@ -24,18 +25,23 @@ def scheduled(
     max_concurrent_runs: int = 1,
     misfire_grace_time: int = 30,
 ) -> Callable[[BaseAgent], BaseAgent]:
-    """Decorator that attaches a :class:`ScheduleConfig` to an ADK agent.
+    """Return a callable that attaches a :class:`ScheduleConfig` to an ADK agent.
 
-    Usage::
+    .. note::
+        Python's ``@decorator`` syntax only applies to ``def`` / ``class``
+        statements, **not** to variable assignments.  Use the call-style API::
 
-        @scheduled(cron="0 * * * *")
-        root_agent = Agent(name="my_agent", ...)
+            root_agent = scheduled(cron="0 * * * *")(Agent(...))
 
-    The decorator is idempotent — applying it again on an already-decorated
-    agent overwrites the previous schedule config.
+        or the more readable :func:`with_schedule` helper::
 
-    Because ``BaseAgent`` is a Pydantic ``BaseModel``, the config is stored via
-    ``object.__setattr__`` to bypass Pydantic's field validation.
+            root_agent = with_schedule(Agent(...), cron="0 * * * *")
+
+    The operation is idempotent — calling it again on an already-scheduled agent
+    replaces the previous config.
+
+    Because :class:`~google.adk.agents.BaseAgent` is a Pydantic ``BaseModel``,
+    the config is stored via ``object.__setattr__`` to bypass field validation.
     """
 
     def decorator(agent: BaseAgent) -> BaseAgent:
@@ -44,6 +50,7 @@ def scheduled(
             cron=cron,
             interval_seconds=interval_seconds,
             condition=condition,
+            condition_poll_interval=condition_poll_interval,
             trigger_text=trigger_text,
             user_id=user_id,
             session_service_uri=session_service_uri,
@@ -69,6 +76,7 @@ def with_schedule(
     cron: str | None = None,
     interval_seconds: int | None = None,
     condition: Callable[[], Any] | None = None,
+    condition_poll_interval: int = 60,
     trigger_text: str = "__tick__",
     user_id: str = "adk-scheduler",
     session_service_uri: str | None = None,
@@ -79,8 +87,7 @@ def with_schedule(
 ) -> BaseAgent:
     """Attach a schedule to *agent* and return it.
 
-    This is a convenience wrapper around :func:`scheduled` with a more readable
-    call site when building agents inline::
+    Preferred call-site API when building agents inline::
 
         root_agent = with_schedule(
             Agent(name="my_agent", model="gemini-2.0-flash", ...),
@@ -93,6 +100,7 @@ def with_schedule(
         cron=cron,
         interval_seconds=interval_seconds,
         condition=condition,
+        condition_poll_interval=condition_poll_interval,
         trigger_text=trigger_text,
         user_id=user_id,
         session_service_uri=session_service_uri,

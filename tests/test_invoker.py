@@ -110,8 +110,7 @@ async def test_invoke_agent_calls_on_error_on_failure():
     class FailingAgent(EchoAgent):
         async def _run_async_impl(self, ctx):
             raise RuntimeError("boom")
-            # Make it a generator
-            yield  # noqa: unreachable
+            yield  # pragma: no cover  — required to make this an async generator
 
     agent = FailingAgent(name="failer", description="fails")
     cfg = ScheduleConfig(

@@ -117,7 +117,7 @@ async def evaluate_condition(cfg: ScheduleConfig) -> bool:
 def _extract_text(event) -> str:
     """Pull plain text from the final response event, empty string if none."""
     if event.content and event.content.parts:
-        return "".join(
-            part.text for part in event.content.parts if hasattr(part, "text") and part.text
-        )
+        # part.text is a field on the Pydantic model so hasattr is always True;
+        # check for None/empty explicitly.
+        return "".join(part.text for part in event.content.parts if part.text)
     return ""
