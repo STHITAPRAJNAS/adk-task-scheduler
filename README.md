@@ -2,8 +2,8 @@
 
 [![PyPI version](https://img.shields.io/pypi/v/adk-task-scheduler.svg)](https://pypi.org/project/adk-task-scheduler/)
 [![Python](https://img.shields.io/pypi/pyversions/adk-task-scheduler.svg)](https://pypi.org/project/adk-task-scheduler/)
+[![CI](https://github.com/STHITAPRAJNAS/adk-task-scheduler/actions/workflows/ci.yml/badge.svg)](https://github.com/STHITAPRAJNAS/adk-task-scheduler/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-44%20passed-brightgreen.svg)](#development)
 
 Auto-scheduling for [Google ADK](https://google.github.io/adk-docs/) agents.  
 Bake **cron**, **interval**, or **condition-based** triggers directly into your agent definitions so they self-wake — no separate orchestrator, no cloud scheduler, no code changes to ADK.
@@ -392,17 +392,24 @@ curl -s -X POST http://localhost:8000/run \
 
 ---
 
-## Publishing to PyPI
+## Releasing
 
-```bash
-pip install hatch twine
-hatch build          # creates dist/adk_task_scheduler-*.whl and .tar.gz
-twine check dist/*
-twine upload dist/*
-```
+This project uses **PyPI Trusted Publishing** (OIDC) — no API token needed.
 
-Bump the version in `pyproject.toml` and `adk_task_scheduler/__init__.py`
-before each release, then update `CHANGELOG.md`.
+**Steps:**
+
+1. Bump the version in `pyproject.toml` and `adk_task_scheduler/__init__.py`.
+2. Add a section to `CHANGELOG.md`.
+3. Commit and push to `main`.
+4. Tag the release:
+   ```bash
+   git tag v0.2.0
+   git push origin v0.2.0
+   ```
+5. The [publish workflow](.github/workflows/publish.yml) triggers automatically on `v*.*.*` tags, runs the full test suite, then uploads to PyPI via `pypa/gh-action-pypi-publish`.
+
+**One-time setup (first release only):**  
+Add a *Trusted Publisher* entry on [pypi.org/manage/account/publishing/](https://pypi.org/manage/account/publishing/) pointing to `STHITAPRAJNAS/adk-task-scheduler`, workflow `publish.yml`, and environment `pypi`.
 
 ---
 
