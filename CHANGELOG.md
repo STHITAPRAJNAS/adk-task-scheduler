@@ -3,6 +3,32 @@
 All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+
+- `ScheduleConfig` now accepts `artifact_service_uri`, `memory_service_uri`,
+  and `session_db_kwargs` — matching the full parameter surface of
+  `get_fast_api_app`.
+- `RunnerPool` delegates to ADK's `create_*_service_from_options` helpers so
+  service construction is always consistent with the ad-hoc runner.
+- `RunnerPool` now injects `InMemoryCredentialService` so agents that use
+  OAuth tools work correctly in scheduled invocations.
+- `RunnerPool` accepts a `base_dir` parameter (forwarded automatically from
+  `build_scheduled_app` as `agents_dir`).
+- `build_scheduled_app` propagates service URIs from its kwargs into any
+  `ScheduleConfig` that hasn't set them explicitly — configure once at app
+  level, not per-schedule.
+- `py.typed` marker for PEP 561 compliance (mypy consumers see full types).
+
+### Fixed
+
+- Test isolation: autouse `_isolated_cwd` fixture in conftest now sets cwd
+  to a temporary directory for every test, preventing ADK's local-SQLite
+  fallback from creating session-storage directories in the project root.
+- `_propagate_service_uris` now uses plain `setattr` instead of
+  `object.__setattr__` — `ScheduleConfig` is a plain dataclass, not Pydantic.
+
 ## [0.1.0] - 2025-05-05
 
 ### Added

@@ -161,4 +161,4 @@ def _propagate_service_uris(
     for cfg in schedules:
         for field_name, value in overrides.items():
             if getattr(cfg, field_name) is None:
-                object.__setattr__(cfg, field_name, value)
+                setattr(cfg, field_name, value)
