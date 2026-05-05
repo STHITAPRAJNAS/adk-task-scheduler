@@ -14,7 +14,7 @@ Quick start::
     # uvicorn main:app
 """
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 from .app import build_scheduled_app
 from .config import ScheduleConfig

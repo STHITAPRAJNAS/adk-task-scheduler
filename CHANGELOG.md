@@ -3,6 +3,19 @@
 All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.2] - 2026-05-05
+
+### Changed
+
+- PyPI metadata: richer keyword set (`a2a`, `genai`, `agent`, `agentic`, `llm-agent`,
+  `vertex-ai`, `google-cloud`, `generative-ai`, `background-tasks`, `task-scheduler`)
+  aligned with ADK ecosystem search terms.
+- Classifiers: added `Environment :: Web Environment`, `Framework :: AsyncIO`,
+  `Natural Language :: English`, `Programming Language :: Python :: 3 :: Only`,
+  `Topic :: Internet :: WWW/HTTP`, `Typing :: Typed`.
+- License field upgraded to SPDX expression (`Apache-2.0`) per PEP 639.
+- Added `Documentation` URL to project metadata.
+
 ## [0.1.1] - 2026-05-05
 
 ### Added

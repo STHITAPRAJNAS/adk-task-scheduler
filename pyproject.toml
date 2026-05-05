@@ -1,25 +1,53 @@
 [project]
 name = "adk-task-scheduler"
-version = "0.1.1"
-description = "Auto-scheduling for Google ADK agents — bake cron/interval/condition triggers into agent definitions, deployed alongside get_fast_api_app"
+version = "0.1.2"
+description = "Cron, interval, and condition-based auto-scheduling for Google ADK agents — zero patching, full FastAPI integration"
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "Apache-2.0" }
+license = "Apache-2.0"
 authors = [{ name = "Sthitaprajnas Sahoo", email = "papu.sahoo@gmail.com" }]
-keywords = ["google-adk", "agents", "scheduler", "cron", "fastapi", "llm", "apscheduler"]
+keywords = [
+    "google-adk",
+    "adk",
+    "a2a",
+    "agent",
+    "agents",
+    "agent-framework",
+    "agentic",
+    "scheduler",
+    "task-scheduler",
+    "cron",
+    "background-tasks",
+    "apscheduler",
+    "fastapi",
+    "async",
+    "llm",
+    "llm-agent",
+    "genai",
+    "gemini",
+    "vertex-ai",
+    "google-cloud",
+    "generative-ai",
+]
 classifiers = [
     "Development Status :: 4 - Beta",
+    "Environment :: Web Environment",
+    "Framework :: AsyncIO",
     "Framework :: FastAPI",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: Apache Software License",
-    "Topic :: Scientific/Engineering :: Artificial Intelligence",
-    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
-    "Operating System :: OS Independent",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
 ]
 dependencies = [
     "google-adk>=1.7.0",
@@ -37,6 +65,7 @@ dev = [
 
 [project.urls]
 Homepage = "https://github.com/STHITAPRAJNAS/adk-task-scheduler"
+Documentation = "https://github.com/STHITAPRAJNAS/adk-task-scheduler#readme"
 Repository = "https://github.com/STHITAPRAJNAS/adk-task-scheduler"
 "Bug Tracker" = "https://github.com/STHITAPRAJNAS/adk-task-scheduler/issues"
 Changelog = "https://github.com/STHITAPRAJNAS/adk-task-scheduler/blob/main/CHANGELOG.md"
