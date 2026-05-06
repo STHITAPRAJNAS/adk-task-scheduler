@@ -14,17 +14,18 @@ Quick start::
     # uvicorn main:app
 """
 
-__version__ = "0.1.2"
+__version__ = "0.2.0"
 
 from .app import build_scheduled_app
-from .config import ScheduleConfig
+from .config import ConditionContext, ScheduleConfig
 from .decorator import get_schedule_config, scheduled, with_schedule
 
 __all__ = [
     "__version__",
-    "scheduled",
-    "with_schedule",
-    "get_schedule_config",
+    "ConditionContext",
     "ScheduleConfig",
     "build_scheduled_app",
+    "get_schedule_config",
+    "scheduled",
+    "with_schedule",
 ]

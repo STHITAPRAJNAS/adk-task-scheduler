@@ -3,6 +3,34 @@
 All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.2.0] - 2026-05-05
+
+### Added
+
+- `fire_mode` field on `ScheduleConfig` — `"every"` (default, existing behaviour)
+  or `"once_until_reset"` which fires only on a False→True condition transition,
+  suppressing re-fires while the condition stays truthy.
+- `ConditionContext` dataclass passed to one-argument condition callables;
+  carries `last_fired_at`, `fire_count`, and `extra_state` so conditions can
+  make time-aware or count-aware decisions.  Zero-argument callables still work
+  unchanged.
+- `condition_backoff_factor` — exponential back-off multiplier applied to
+  `condition_poll_interval` after each consecutive falsy evaluation.  Reduces
+  unnecessary API calls for slow-changing conditions.
+- `condition_max_poll_interval` — upper bound (seconds) on the back-off delay.
+- `condition` may now be combined with `cron` or `interval_seconds` to act as a
+  gate: the schedule controls *when* to check, the condition controls *whether*
+  to fire.  Previously these were mutually exclusive.
+- Condition evaluation exceptions are now caught and routed to `on_error`;
+  previously they propagated silently through APScheduler.
+- `ConditionContext` exported from the top-level package.
+- 29 new tests covering all condition improvements.
+
+### Changed
+
+- `ScheduleConfig` validation: `cron` and `interval_seconds` are now mutually
+  exclusive (raises `ValueError`); previously mixing them was silently ignored.
+
 ## [0.1.2] - 2026-05-05
 
 ### Changed

@@ -8,7 +8,7 @@ from google.adk.runners import Runner
 from google.adk.sessions.base_session_service import BaseSessionService
 from google.genai import types
 
-from .config import ScheduleConfig
+from .config import ConditionContext, ScheduleConfig
 
 logger = logging.getLogger(__name__)
 
@@ -124,11 +124,23 @@ def make_apscheduler_job(cfg: ScheduleConfig, pool: RunnerPool):
     return _job
 
 
-async def evaluate_condition(cfg: ScheduleConfig) -> bool:
-    """Evaluate a condition callback that may be sync or async."""
+async def evaluate_condition(
+    cfg: ScheduleConfig,
+    ctx: ConditionContext | None = None,
+) -> bool:
+    """Evaluate a condition callback that may be sync or async.
+
+    Supports both zero-argument callables (legacy) and one-argument callables
+    that receive a :class:`~adk_task_scheduler.config.ConditionContext`.
+    Exceptions propagate to the caller so they can be routed to ``on_error``.
+    """
     if cfg.condition is None:
         return False
-    result = cfg.condition()
+    try:
+        params = inspect.signature(cfg.condition).parameters
+        result = cfg.condition(ctx) if params and ctx is not None else cfg.condition()
+    except TypeError:
+        result = cfg.condition()
     if inspect.isawaitable(result):
         result = await result
     return bool(result)

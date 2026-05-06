@@ -2,16 +2,45 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any
+from datetime import datetime
+from typing import Any, Literal
 
 from google.adk.agents import BaseAgent
+
+
+@dataclass
+class ConditionContext:
+    """Runtime context passed to condition callables that declare one parameter.
+
+    Condition functions may either take no arguments (legacy, still supported)
+    or accept a single ``ConditionContext`` argument::
+
+        def my_condition(ctx: ConditionContext) -> bool:
+            if ctx.last_fired_at is None:
+                return True          # never fired — fire now
+            elapsed = (datetime.now(timezone.utc) - ctx.last_fired_at).total_seconds()
+            return elapsed > 3600   # fire at most once per hour
+
+    Attributes:
+        last_fired_at: UTC datetime of the most recent successful invocation,
+            or ``None`` if the agent has never been invoked by this schedule.
+        fire_count: Number of times the agent has been invoked by this schedule.
+        extra_state: The ``extra_state`` dict from the parent :class:`ScheduleConfig`.
+    """
+
+    last_fired_at: datetime | None
+    fire_count: int
+    extra_state: dict[str, Any]
 
 
 @dataclass
 class ScheduleConfig:
     """Describes when and how to auto-invoke an ADK agent.
 
-    Exactly one of ``cron``, ``interval_seconds``, or ``condition`` must be set.
+    At least one of ``cron``, ``interval_seconds``, or ``condition`` must be set.
+    ``cron`` and ``interval_seconds`` are mutually exclusive.  ``condition`` may
+    be combined with ``cron`` or ``interval_seconds`` to act as a gate: the
+    schedule determines *when* to check, the condition determines *whether* to fire.
 
     Args:
         agent: The ADK agent to invoke on schedule.
@@ -19,11 +48,27 @@ class ScheduleConfig:
             Defaults to ``agent.name``.
         cron: Standard 5-field crontab expression, e.g. ``"0 9 * * 1-5"``.
         interval_seconds: Fixed interval in seconds.  Must be a positive integer.
-        condition: Zero-argument callable (sync or async) polled every
-            ``condition_poll_interval`` seconds.  The agent fires whenever it
-            returns a truthy value.
-        condition_poll_interval: How often (in seconds) to evaluate ``condition``.
-            Defaults to ``60``.  Ignored unless ``condition`` is set.
+        condition: Zero- or one-argument callable (sync or async).  When used
+            alone it is polled every ``condition_poll_interval`` seconds and the
+            agent fires on truthy results.  When combined with ``cron`` or
+            ``interval_seconds`` it gates each tick — the agent only fires if the
+            condition returns truthy on that tick.
+            One-argument form receives a :class:`ConditionContext`.
+        condition_poll_interval: How often (in seconds) to evaluate ``condition``
+            when used standalone (without ``cron`` / ``interval_seconds``).
+            Defaults to ``60``.
+        fire_mode: Controls firing behaviour for standalone condition polling.
+
+            * ``"every"`` *(default)* — fire on every truthy evaluation.
+            * ``"once_until_reset"`` — fire only on the False→True transition;
+              suppresses repeated fires while the condition stays truthy.
+
+        condition_backoff_factor: Exponential back-off multiplier applied to
+            ``condition_poll_interval`` after each consecutive falsy evaluation.
+            ``1.0`` (default) disables back-off.  ``2.0`` doubles the wait after
+            each false result.  Ignored unless ``condition`` is used standalone.
+        condition_max_poll_interval: Upper bound (seconds) on the back-off delay.
+            ``None`` (default) means no cap.
         trigger_text: Synthetic user message sent to the agent on each tick.
             The agent's instruction should distinguish this from real user input
             (e.g. ``"When the message is '__tick__' run the scheduled routine"``).
@@ -45,7 +90,8 @@ class ScheduleConfig:
         on_response: Optional callback invoked with the agent's final text after
             each scheduled invocation.
         on_error: Optional callback invoked with any exception raised during a
-            scheduled invocation.  If not set, errors are only logged.
+            scheduled invocation or condition evaluation.  If not set, errors
+            are only logged.
         max_concurrent_runs: Maximum number of overlapping invocations allowed
             for this schedule.  APScheduler drops additional firings beyond this
             limit rather than queuing them.
@@ -61,6 +107,9 @@ class ScheduleConfig:
     interval_seconds: int | None = None
     condition: Callable[[], Any] | None = None
     condition_poll_interval: int = 60
+    fire_mode: Literal["every", "once_until_reset"] = "every"
+    condition_backoff_factor: float = 1.0
+    condition_max_poll_interval: int | None = None
     trigger_text: str = "__tick__"
     user_id: str = "adk-scheduler"
     session_service_uri: str | None = None
@@ -74,20 +123,21 @@ class ScheduleConfig:
     extra_state: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        # Use explicit None checks so that interval_seconds=0 is caught correctly
-        # and not silently treated as "not set" (any([0]) is falsy).
-        has_trigger = (
-            self.cron is not None
-            or self.interval_seconds is not None
-            or self.condition is not None
-        )
-        if not has_trigger:
+        has_schedule = self.cron is not None or self.interval_seconds is not None
+        has_condition = self.condition is not None
+        if not has_schedule and not has_condition:
             raise ValueError(
-                "ScheduleConfig requires exactly one of: cron, interval_seconds, condition"
+                "ScheduleConfig requires at least one of: cron, interval_seconds, condition"
             )
+        if self.cron is not None and self.interval_seconds is not None:
+            raise ValueError("cron and interval_seconds are mutually exclusive")
         if self.interval_seconds is not None and self.interval_seconds <= 0:
             raise ValueError("interval_seconds must be a positive integer")
         if self.condition_poll_interval <= 0:
             raise ValueError("condition_poll_interval must be a positive integer")
+        if self.condition_backoff_factor < 1.0:
+            raise ValueError("condition_backoff_factor must be >= 1.0")
+        if self.condition_max_poll_interval is not None and self.condition_max_poll_interval <= 0:
+            raise ValueError("condition_max_poll_interval must be a positive integer")
         if self.app_name is None:
             self.app_name = self.agent.name
