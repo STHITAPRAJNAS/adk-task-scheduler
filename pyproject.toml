@@ -1,6 +1,6 @@
 [project]
 name = "adk-task-scheduler"
-version = "0.1.2"
+version = "0.2.0"
 description = "Cron, interval, and condition-based auto-scheduling for Google ADK agents — zero patching, full FastAPI integration"
 readme = "README.md"
 requires-python = ">=3.10"
